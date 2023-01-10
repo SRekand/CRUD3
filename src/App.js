@@ -1,16 +1,26 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {AddComment} from "./components/AddComment";
 import {Comment} from "./components/Comment";
 import "./styles.css";
 
 const connection = new WebSocket("ws://localhost:3001/")
+let isLoaded = false
+function getCommentsFromCache(setComments) {
+    const storedComments = localStorage.getItem('comments')
+    console.log(storedComments)
+    console.log("getCommentsFromCache")
+    if (storedComments) {
+        setComments(JSON.parse(storedComments))
+    }
+}
 
 export default function App() {
+    debugger
     const [comments, setComments] = useState([]);
     connection.onmessage = async function (event) {
         const message = JSON.parse(event.data);
         if (message.action === "add") {
-            setComments([...comments, message.object]) // add new comment
+            setComments([...comments, message.object])
         } else if (message.action === "edit") {
             const index = comments.findIndex(comment => comment.id === parseInt(message.object.id)) // find the index of the comment
             const newComments = [...comments] // copy the array
@@ -22,14 +32,28 @@ export default function App() {
         }
     }
 
+    const memoizedCallback = useCallback(  () => {
+        if (!isLoaded) {
+            isLoaded = true
+            console.log("initial")
+            getCommentsFromCache(setComments);
+            fetchData();
+        }
+    },[isLoaded]);
+
+    useEffect(memoizedCallback, []);
+
     useEffect(() => {
-        fetchData();
-    }, []);
+        console.log("useeffect")
+        console.log(comments)
+        localStorage.setItem('comments', JSON.stringify(comments));
+    }, [comments])
 
     const fetchData = async () => {
+        console.log("fetch data")
         await fetch(process.env.REACT_APP_MY_API_URL + "/comments?_limit=10")
             .then((response) => response.json())
-            .then((data) => setComments(data))
+            .then((data) => {console.log("fetch"); setComments(data)})
             .catch((error) => console.log(error));
     };
 
