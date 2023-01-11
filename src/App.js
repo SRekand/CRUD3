@@ -7,15 +7,12 @@ const connection = new WebSocket("ws://localhost:3001/")
 let isLoaded = false
 function getCommentsFromCache(setComments) {
     const storedComments = localStorage.getItem('comments')
-    console.log(storedComments)
-    console.log("getCommentsFromCache")
     if (storedComments) {
         setComments(JSON.parse(storedComments))
     }
 }
 
 export default function App() {
-    debugger
     const [comments, setComments] = useState([]);
     connection.onmessage = async function (event) {
         const message = JSON.parse(event.data);
@@ -26,7 +23,6 @@ export default function App() {
             const newComments = [...comments] // copy the array
             newComments[index] = message.object // replace a comment at index
             await setComments(newComments) // update the state
-            console.log(JSON.stringify(newComments))
         } else if (message.action === "delete") {
             setComments(comments.filter(comment => comment.id !== parseInt(message.object.id))) // remove a comment
         }
@@ -35,7 +31,6 @@ export default function App() {
     const memoizedCallback = useCallback(  () => {
         if (!isLoaded) {
             isLoaded = true
-            console.log("initial")
             getCommentsFromCache(setComments);
             fetchData();
         }
@@ -44,8 +39,6 @@ export default function App() {
     useEffect(memoizedCallback, []);
 
     useEffect(() => {
-        console.log("useeffect")
-        console.log(comments)
         localStorage.setItem('comments', JSON.stringify(comments));
     }, [comments])
 
