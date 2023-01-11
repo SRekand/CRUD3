@@ -43,7 +43,6 @@ export default function App() {
     }, [comments])
 
     const fetchData = async () => {
-        console.log("fetch data")
         await fetch(process.env.REACT_APP_MY_API_URL + "/comments?_limit=10")
             .then((response) => response.json())
             .then((data) => {console.log("fetch"); setComments(data)})
