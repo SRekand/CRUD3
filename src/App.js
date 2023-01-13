@@ -129,7 +129,7 @@ export default function App() {
                     ))}
                     </tbody>
                 </table>
-                <button onClick={handleLogs}>Go to Logs</button>
+                <button onClick={handleLogs}>Check Logs</button>
             </div>
         }
         </body>
