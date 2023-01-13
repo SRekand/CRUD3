@@ -2,10 +2,12 @@ import React, {useCallback, useEffect, useState} from "react";
 import {AddComment} from "./components/AddComment";
 import {Comment} from "./components/Comment";
 import "./styles.css";
+import ServerLogs from "./components/ServerLogs";
 
 const WebSocketConnection = new WebSocket("ws://localhost:3001/")
 let isLoaded = false
 const statusCreated = 201;
+
 function getCommentsFromCache(setComments) {
     const storedComments = localStorage.getItem('comments')
     if (storedComments) {
@@ -15,6 +17,7 @@ function getCommentsFromCache(setComments) {
 
 export default function App() {
     const [comments, setComments] = useState([]);
+    const [view, setView] = useState(false);
     WebSocketConnection.onmessage = async function (event) {
         const message = JSON.parse(event.data);
         if (message.action === "add") {
@@ -29,13 +32,13 @@ export default function App() {
         }
     }
 
-    const memoizedCallback = useCallback(  () => {
+    const memoizedCallback = useCallback(() => {
         if (!isLoaded) {
             isLoaded = true
             getCommentsFromCache(setComments);
             fetchData();
         }
-    },[isLoaded]);
+    }, [isLoaded]);
 
     useEffect(memoizedCallback, []);
 
@@ -94,34 +97,41 @@ export default function App() {
         })
             .catch("Error while deleting comments");
     };
-
+    const handleLogs = () => {
+        setView(true)
+    }
     return (
-        <div className="App">
-            <h1>Comments!</h1>
-            <AddComment onAdd={onAdd}/>
-            <table border={1} className="form_body">
-                <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Body</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                {comments.map((comment) => (
-                    <Comment
-                        id={comment.id}
-                        key={comment.id}
-                        name={comment.name}
-                        email={comment.email}
-                        body={comment.body}
-                        onEdit={onEdit}
-                        onDelete={onDelete}
-                    />
-                ))}
-                </tbody>
-            </table>
-        </div>
+        <body>
+        {view ? <ServerLogs setView={setView}/> :
+            <div className="App">
+                <h1>Comments!</h1>
+                <AddComment onAdd={onAdd}/>
+                <table border={1} className="form_body">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Body</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {comments.map((comment) => (
+                        <Comment
+                            id={comment.id}
+                            key={comment.id}
+                            name={comment.name}
+                            email={comment.email}
+                            body={comment.body}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                        />
+                    ))}
+                    </tbody>
+                </table>
+                <button onClick={handleLogs}>Go to Logs</button>
+            </div>
+        }
+        </body>
     );
 }
