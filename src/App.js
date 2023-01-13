@@ -3,8 +3,9 @@ import {AddComment} from "./components/AddComment";
 import {Comment} from "./components/Comment";
 import "./styles.css";
 
-const connection = new WebSocket("ws://localhost:3001/")
+const WebSocketConnection = new WebSocket("ws://localhost:3001/")
 let isLoaded = false
+const statusCreated = 201;
 function getCommentsFromCache(setComments) {
     const storedComments = localStorage.getItem('comments')
     if (storedComments) {
@@ -14,7 +15,7 @@ function getCommentsFromCache(setComments) {
 
 export default function App() {
     const [comments, setComments] = useState([]);
-    connection.onmessage = async function (event) {
+    WebSocketConnection.onmessage = async function (event) {
         const message = JSON.parse(event.data);
         if (message.action === "add") {
             setComments([...comments, message.object])
@@ -38,6 +39,7 @@ export default function App() {
 
     useEffect(memoizedCallback, []);
 
+    // creates a localStore cache
     useEffect(() => {
         localStorage.setItem('comments', JSON.stringify(comments));
     }, [comments])
@@ -45,8 +47,8 @@ export default function App() {
     const fetchData = async () => {
         await fetch(process.env.REACT_APP_MY_API_URL + "/comments?_limit=10")
             .then((response) => response.json())
-            .then((data) => {console.log("fetch"); setComments(data)})
-            .catch((error) => console.log(error));
+            .then((data) => setComments(data))
+            .catch("Error while getting the comments");
     };
 
     const onAdd = async (name, email, body) => {
@@ -62,13 +64,13 @@ export default function App() {
             },
         })
             .then((response) => {
-                if (response.status === 201) {
+                if (response.status === statusCreated) {
                     return response.json();
                 } else {
                     return response.json();
                 }
             })
-            .catch((error) => console.log(error));
+            .catch("Error while creating a comment");
     };
 
     const onEdit = async (id, name, email, body) => {
@@ -83,14 +85,14 @@ export default function App() {
                 "Content-type": "application/json; charset=UTF-8",
             },
         })
-            .catch((error) => console.log(error));
+            .catch("Error while updating comments");
     };
 
     const onDelete = async (id) => {
         await fetch(process.env.REACT_APP_MY_API_URL + `/comments/${id}`, {
             method: "DELETE",
         })
-            .catch((error) => console.log(error));
+            .catch("Error while deleting comments");
     };
 
     return (
